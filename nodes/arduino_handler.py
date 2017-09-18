@@ -94,8 +94,16 @@ PUBLISHERS = {
     for variable in VALID_SENSOR_VARIABLES
 }
 
+
+
 ARDUINO_STATUS_PUBLISHER = rospy.Publisher(
     "/arduino_status",
+    String,
+    queue_size=10)
+
+# tatsuya added 20170918
+ACTTUATOR_LOG_PUBLISHER = rospy.Publisher(
+    "/actuator_log",
     String,
     queue_size=10)
 
@@ -397,11 +405,11 @@ if __name__ == '__main__':
         ).encode('utf-8')
         buf = ""
 
-        # Fix issue #328, sometimes serial_connection is None because of a 
+        # Fix issue #328, sometimes serial_connection is None because of a
         # serial port path / or error opening issue.
         if serial_connection is None:
             serial_connection = connect_serial()
-        
+
         try:
             # Write
             serial_connection.write(message) # Write message or timeout
@@ -409,9 +417,9 @@ if __name__ == '__main__':
                 len(message), message.replace('\n',''))
             serial_connection.flush() # Wait until all data is written
             serial_connection.flushOutput() # Clear output buffer
-            # Read. Arduino sends both error messages and sensor data, 
+            # Read. Arduino sends both error messages and sensor data,
             # in that order, and both may be in the buffer.
-            # Wait until Arduino data is stable 
+            # Wait until Arduino data is stable
             # (rospy.Rate will still try to keep the loop at serial_rate_hz)
             rospy.sleep(arduino_delay_s)
             # Blocks until one line is read or times out
@@ -431,7 +439,7 @@ if __name__ == '__main__':
             below will throw away sensor data if it was sent after the error
             message.
             Without the flush the input buffer eventually will overflow if
-            enough error messages are sent by the Arduino.  
+            enough error messages are sent by the Arduino.
             """
             serial_connection.flushInput()
         except serial.serialutil.SerialException as e1:
@@ -464,6 +472,9 @@ if __name__ == '__main__':
                 if variable not in [v.name for v in VALID_SENSOR_VARIABLES]:
                     continue
                 PUBLISHERS[variable].publish(sensor_state[variable])
+        #pubish to actuator_log topic
+        ACTTUATOR_LOG_PUBLISHER.publish(message)
+
         serial_rate.sleep()
         # end of while loop
 

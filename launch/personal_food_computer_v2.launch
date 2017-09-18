@@ -30,12 +30,14 @@
     </node>
     <node pkg="openag_brain" type="recipe_handler.py" name="recipe_handler_1"/>
     <node pkg="openag_brain" type="recipe_persistence.py" name="recipe_persistence_1"/>
-    <node pkg="openag_brain" type="video_writer.py" name="video_writer_1">
+    <!--<node pkg="openag_brain" type="video_writer.py" name="video_writer_1">
       <param name="timelapse_scaling_factor" value="86400" type="int"/>
     </node>
-    <node pkg="openag_brain" type="image_persistence.py" name="image_persistence_1">
+    -->
+    <!--<node pkg="openag_brain" type="image_persistence.py" name="image_persistence_1">
       <param name="min_update_interval" value="3600" type="int"/>
     </node>
+    -->
     <node pkg="openag_brain" type="direct_controller.py" name="light_controller_red_1">
       <param name="variable" value="light_intensity_red" type="str"/>
     </node>
@@ -65,14 +67,16 @@
       <param name="filename_format" value="/var/www/html/img.jpg" type="string" />
     </node>
     -->
-
+    <!--
     <node pkg="usb_cam" type="usb_cam_node" name="aerial_image">
       <rosparam file="$(find openag_brain)/launch/usb_cam.yaml" />
     </node>
+    -->
     <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
       <param name="publisher_rate_hz" value="1" type="int"/>
       <param name="baud_rate" value="115200" type="int"/>
     </node>
+    <node pkg="openag_brain" type="actuator_persistence.py" name="actuator_persistence"/>
   </group>
   <node pkg="openag_brain" type="expand_diagnostics.py" name="expand_diagnostics"/>
 

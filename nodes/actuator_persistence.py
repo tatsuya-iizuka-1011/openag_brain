@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from collections import OrderedDict
 from std_msgs.msg import String
 from openag_lib.config import config as cli_config
@@ -65,7 +67,7 @@ class ActuatorPersistence():
 
 
 
-if __name__ != "__main__"
+if __name__ == "__main__":
     db_server = cli_config["local_server"]["url"]
     if not db_server:
         raise RuntimeError("No local database specified")

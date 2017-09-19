@@ -60,22 +60,18 @@
       <param name="max_update_interval" value="600" type="int"/>
       <param name="min_update_interval" value="5" type="int"/>
     </node>
-
-    <!-- only works if nginx and openag_ui are installed
-    <node pkg="image_view" type="image_saver" name="aerial_saver">
-      <remap from="image" to="aerial_image/image_raw" />
-      <param name="filename_format" value="/var/www/html/img.jpg" type="string" />
+    <!-- capture images  -->
+    <node pkg="openag_brain" type="image_saver.py" name="aerial_saver">
+        <param name="min_update_interval" value="60" type="int"/>
     </node>
-    -->
-    <!--
-    <node pkg="usb_cam" type="usb_cam_node" name="aerial_image">
-      <rosparam file="$(find openag_brain)/launch/usb_cam.yaml" />
+    <node pkg="openag_brain" type="image_persistence.py" name="image_persistence">
+        <param name="min_update_interval" value="3600" type="int"/>
     </node>
-    -->
     <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
       <param name="publisher_rate_hz" value="1" type="int"/>
       <param name="baud_rate" value="115200" type="int"/>
     </node>
+    <!-- logging actuator state -->
     <node pkg="openag_brain" type="actuator_persistence.py" name="actuator_persistence"/>
   </group>
   <node pkg="openag_brain" type="expand_diagnostics.py" name="expand_diagnostics"/>

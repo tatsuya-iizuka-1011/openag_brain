@@ -103,7 +103,7 @@ ARDUINO_STATUS_PUBLISHER = rospy.Publisher(
 
 # tatsuya added 20170918
 ACTTUATOR_LOG_PUBLISHER = rospy.Publisher(
-    "/actuator_log",
+    "actuator_log",
     String,
     queue_size=10)
 

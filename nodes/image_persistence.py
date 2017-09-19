@@ -12,11 +12,12 @@ for the environment are streams of images from connected webcams.
 import time
 import rospy
 import requests
+from shutil import copyfile
 from PIL import Image
 from couchdb import Server
 from StringIO import StringIO
-from sensor_msgs.msg import Image as ImageMsg
 from re import match
+from std_msgs.msg import String
 
 from openag_lib.db_bootstrap.db_names import ENVIRONMENTAL_DATA_POINT
 from openag_lib.config import config as cli_config
@@ -25,8 +26,12 @@ from openag_brain.load_env_var_types import create_variables
 from openag_brain import params
 from openag_brain.utils import read_environment_from_ns
 
+PLANT_DATA_POINT = 'plant_data_point'
 # Filter a list of environmental variables that are specific to camera
 CAMERA_VARIABLES = create_variables(rospy.get_param('/var_types/camera_variables'))
+
+IMAGE_DATABASE_PATH = "/home/pi/ImageDatabase/aerial_image/"
+
 
 class ImagePersistence:
     image_format_mapping = {
@@ -40,9 +45,9 @@ class ImagePersistence:
         self.environment = environment
         self.min_update_interval = min_update_interval
         self.last_update = 0
-        self.sub = rospy.Subscriber(topic, ImageMsg, self.on_image)
+        self.sub = rospy.Subscriber(topic, String, self.on_image)
 
-    def on_image(self, item):
+    def on_image(self, file_path):
         # Rate limit
         curr_time = time.time()
         if (curr_time - self.last_update) < self.min_update_interval:
@@ -50,35 +55,20 @@ class ImagePersistence:
         self.last_update = curr_time
 
         rospy.loginfo("Posting image")
+        #filename = str(time.time())
 
-        image_format = self.image_format_mapping.get(item.encoding, None)
-        if image_format is None:
-            raise ValueError()
-        img = Image.fromstring(
-            image_format, (item.width, item.height), item.data
-        )
-        point = EnvironmentalDataPoint({
-            "environment": self.environment,
-            "variable": self.variable.name,
-            "is_desired": False,
-            "value": None,
+        rospy.loginfo(file_path.data)
+        filename = file_path.data.split('/')[-1]
+        dst = IMAGE_DATABASE_PATH + "{}".format(filename)
+        copyfile(file_path.data, dst)
+        point = {
+            "environment": "environement_1",
+            "variable": "airial_image",
+            "value": dst,
             "timestamp": time.time()
-        })
-        point_id, point_rev = self.db.save(point)
-        url = "{db_url}/{point_id}/image?rev={rev}".format(
-            db_url=self.db.resource.url, point_id=point_id, rev=point_rev
-        )
-        buf = StringIO()
-        img.save(buf, "PNG")
-        buf.seek(0)
-        headers = {
-            "Content-Type": "image/png"
         }
-        res = requests.put(url, data=buf, headers=headers)
-        if res.status_code != 201:
-            raise RuntimeError(
-                "Failed to post image to database: {}".format(res.content)
-            )
+        point_id, point_rev = self.db.save(point)
+        rospy.loginfo('image data is saved in {}'.format(dst))
 
 if __name__ == '__main__':
     db_server = cli_config["local_server"]["url"]
@@ -94,12 +84,12 @@ if __name__ == '__main__':
             "No minimum update interval specified for image persistence module"
         )
         min_update_interval = 3600
-    env_var_db = server[ENVIRONMENTAL_DATA_POINT]
+    plt_var_db = server[PLANT_DATA_POINT]
     persistence_objs = []
     for variable in CAMERA_VARIABLES.itervalues():
-        topic = "{}/image_raw".format(variable)
+        topic = "{}/image_updated".format(variable)
         persistence_objs.append(ImagePersistence(
-            db=env_var_db, topic=topic, variable=variable,
+            db=plt_var_db, topic=topic, variable=variable,
             environment=environment_id,
             min_update_interval=min_update_interval
         ))

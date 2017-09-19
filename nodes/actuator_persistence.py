@@ -76,6 +76,6 @@ if __name__ == "__main__":
     rospy.init_node('actuator_persistence')
     #environment_id = read_environment_from_ns(rospy.get_namespace())
     environment_id = 'environment_1'
-    ActuatorPersistence(db, '/actuator_log', String, environment_id, actuator_init_state)
+    ActuatorPersistence(db, 'actuator_log', String, environment_id, actuator_init_state)
 
     rospy.spin()

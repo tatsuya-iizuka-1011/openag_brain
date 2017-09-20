@@ -1,3 +1,4 @@
+
 #include <openag_am2315.h>
 #include <openag_mhz16.h>
 #include <openag_ds18b20.h>
@@ -10,6 +11,7 @@
 #include <openag_pulse_actuator.h>
 #include <openag_doser_pump.h>
 #include <openag_tone_actuator.h>
+#include <openag_tsl2561.h>
 
 // Sensor Instances
 Am2315 am2315_1;
@@ -19,6 +21,7 @@ BinarySensor water_level_sensor_high_1(3, false);
 BinarySensor water_level_sensor_low_1(4, false);
 AtlasPh atlas_ph_1(99);
 AtlasEc atlas_ec_1(100);
+//Tsl2561 tsl2561_1(12345);
 
 // Actuator Instances. Sorted by pin number.
 DoserPump pump_1_nutrient_a_1(28, true);
@@ -156,7 +159,7 @@ void actuatorLoop(){
   }
   int command_count = split(message, splitMessages);
   if( command_count != COMMAND_LENGTH ){
-    /* don't send the error message back, it happens too frequently and is 
+    /* don't send the error message back, it happens too frequently and is
        more of a debugging message at this point.  2017-08-02 rbaynes.
     String warn = message;
     warn += " comma counts: ";

@@ -1,0 +1,23 @@
+{
+    "name": "openag_tsl2561",
+    "keywords": "openag, tsl2561",
+    "description": "OpenAg driver for the tsl2561 lihgt intensity sensor",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OpenAgInitiative/openag_ds18b20.git"
+    },
+    "frameworks": "arduino",
+    "platforms": "*",
+    "dependencies": [
+        {
+            "name":"Adafruit Unified Sensor"
+        },
+        {
+            "name":"Adafruit TSL2561"
+        },
+        {
+            "name": "openag_module"
+        }
+    ]
+}
+

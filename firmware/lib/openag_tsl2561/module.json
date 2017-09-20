@@ -1,0 +1,23 @@
+{
+    "description": "Driver for the TSL2561 light sensor",
+    "class_name": "Tsl2561",
+    "header_file": "openag_tsl2561.h",
+    "outputs": {
+        "light_intensity": {
+            "type": "int"
+        }
+    },
+    "arguments": [
+        {
+            "name": "pin",
+            "type": "int"
+        }
+    ],
+    "dependencies": [
+        {"type": "pio", "id": 612}
+    ],
+    "status_codes": {
+        "1": "Unable to find address for sensor",
+        "2": "Sensor isn't responding to queries"
+    }
+}

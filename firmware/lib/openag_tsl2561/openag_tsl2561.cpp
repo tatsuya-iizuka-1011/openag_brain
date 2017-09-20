@@ -5,28 +5,23 @@
 #include "openag_tsl2561.h"
 
 Tsl2561::Tsl2561(int pin) : tsl(TSL2561_ADDR_FLOAT,pin) {
+  status_level = OK;
+  status_code = CODE_OK;
+  status_msg = "";
+  _waiting_for_response = true;
+  _time_of_last_query = 0;
+}
+
+uint8_t Tsl2561::begin() {
   if(!tsl.begin())
   {
     // There was a problem detecting the TSL2561 ... check your connections
     // pi is set as 12345 as default
     status_code = ERROR;
-    Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
-    while(1);
   }
-
-
-  configureSensor();
-}
-
-uint8_t Tsl2561::begin() {
-  status_level = OK;
-  status_code = CODE_OK;
-  status_msg = "";
-  _waiting_for_response = false;
-  _time_of_last_query = 0;
-
   //TODO modify following condition
-  if (0) {
+  configureSensor();
+  if (status_code == ERROR) {
     status_level = ERROR;
     status_code = CODE_COULDNT_FIND_ADDRESS;
     status_msg = "Unable to find address for sensor";
@@ -34,13 +29,14 @@ uint8_t Tsl2561::begin() {
   return status_level;
 }
 uint8_t Tsl2561::update() {
-  if (_waiting_for_response) {
-    read_lux();
-    _waiting_for_response = false;
-  }
   if (millis() - _time_of_last_query > _min_update_interval) {
     //send_query();
     _waiting_for_response = true;
+  }
+  if (_waiting_for_response) {
+    read_lux();
+    _waiting_for_response = false;
+    _time_of_last_query = millis();
   }
   return status_level;
 }

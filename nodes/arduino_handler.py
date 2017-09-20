@@ -33,7 +33,8 @@ sensor_csv_headers = OrderedDict([
     ("water_level_low", float),
     ("water_level_high", float),
     ("water_potential_hydrogen", float),
-    ("water_electrical_conductivity", float)
+    ("water_electrical_conductivity", float),
+    ("light_intensity_white", float)
 ])
 
 actuator_csv_headers =  OrderedDict([

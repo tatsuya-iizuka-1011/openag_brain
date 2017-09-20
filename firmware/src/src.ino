@@ -21,7 +21,10 @@ BinarySensor water_level_sensor_high_1(3, false);
 BinarySensor water_level_sensor_low_1(4, false);
 AtlasPh atlas_ph_1(99);
 AtlasEc atlas_ec_1(100);
-//Tsl2561 tsl2561_1(12345);
+Tsl2561 tsl2561_1(12345);
+
+
+
 
 // Actuator Instances. Sorted by pin number.
 DoserPump pump_1_nutrient_a_1(28, true);
@@ -30,7 +33,8 @@ PulseActuator pump_3_ph_up_1(30, true);
 PulseActuator pump_4_ph_down_1(31, true);
 BinaryActuator pump_5_water_1(32, true, 10000);
 BinaryActuator chiller_fan_1(33, true, 10000);
-BinaryActuator chiller_pump_1(34, true, 10000);
+BinaryActuator chiller_pump_1(34, true,
+  10000);
 BinaryActuator heater_core_2_1(35, true, 10000);
 BinaryActuator air_flush_1(36, true, 10000);
 BinaryActuator water_aeration_pump_1(37, true, 10000);
@@ -63,8 +67,10 @@ bool checkModule(Module &module, String name);
 bool str2bool(String str);
 
 // These functions are defined in the Arduino.h and are the framework.
+
 void setup() {
   Serial.begin(115200);
+
   while(!Serial){
     // wait for serial port to connect, needed for USB
   }
@@ -78,6 +84,7 @@ void setup() {
   beginModule(water_level_sensor_high_1, "Water Level High sensor");
   beginModule(atlas_ph_1, "Atlas pH #1");
   beginModule(atlas_ec_1, "Atlas EC #1");
+  beginModule(tsl2561_1, "TSL2561 #1");
 
   // Begin Actuators
   beginModule(pump_1_nutrient_a_1, "Pump 1, Nutrient A");
@@ -99,6 +106,7 @@ void setup() {
   beginModule(chiller_compressor_1, "Chiller Compressor #1");
 }
 
+
 void loop() {
 
   updateLoop();
@@ -119,6 +127,7 @@ void loop() {
   }
 
 }
+
 
 // Runs inbetween loop()s, just takes any input serial to a string buffer.
 // Runs as realtime as possible since loop has no delay() calls. (It shouldn't!)
@@ -223,6 +232,7 @@ void updateLoop(){
   water_level_sensor_high_1.update();
   atlas_ph_1.update();
   atlas_ec_1.update();
+  tsl2561_1.update();
 }
 
 bool checkActuatorLoop(){
@@ -260,6 +270,7 @@ bool checkSensorLoop(){
   allSensorSuccess = checkModule(water_level_sensor_high_1, "Water Level High sensor") && allSensorSuccess;
   allSensorSuccess = checkModule(atlas_ph_1, "Atlas pH #1") && allSensorSuccess;
   allSensorSuccess = checkModule(atlas_ec_1, "Atlas EC #1") && allSensorSuccess;
+  allSensorSuccess = checkModule(tsl2561_1, "TSL2561 #1") && allSensorSuccess;
 
   return allSensorSuccess;
 }
@@ -275,7 +286,8 @@ void sensorLoop(){
   Serial.print(water_level_sensor_low_1.get_is_on());           Serial.print(',');
   Serial.print(water_level_sensor_high_1.get_is_on());          Serial.print(',');
   Serial.print(atlas_ph_1.get_water_potential_hydrogen());      Serial.print(',');
-  Serial.print(atlas_ec_1.get_water_electrical_conductivity()); Serial.print('\n');
+  Serial.print(atlas_ec_1.get_water_electrical_conductivity()); Serial.print(',');
+  Serial.print(tsl2561_1.get_lux()); Serial.print('\n');
   // https://www.arduino.cc/en/serial/flush
   // Wait until done writing.
   Serial.flush();

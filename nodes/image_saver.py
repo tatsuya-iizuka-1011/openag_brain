@@ -6,19 +6,28 @@ when the image file is successfully saved, this ROS node publish the file path t
 
 import rospy
 from std_msgs.msg import  String
-import time, os, subprocess
+import time, os, subprocess, sys
+import cv2
 
+DEVICE_VIDEO_PATH = '/dev/video'
 
 
 def save_image(device_name, TMP_IMG_PATH):
     is_updated = False
     curr_time = int(time.time())
-    filename = '{}.jpg'.format(str(curr_time))
-    FNULL = open(os.devnull, 'w')
+    filename = '{}.png'.format(str(curr_time))
     try:
-        subprocess.call(['sudo', 'fswebcam', '--no-banner',  '-d', device_name, '-r', '1280x1024', TMP_IMG_PATH  + filename], stdout=FNULL,stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError, e:
-        pass
+        device_number = int(device_name.strip(DEVICE_VIDEO_PATH))
+    except:
+        rospy.logwarn("incorrect device name")
+    video_cap = cv2.VideoCapture(device_number)
+    if not video_cap.isOpened():
+        rospy.logwarn('{} cannot be open'.format(device_name))
+    ret, img = video_cap.read()
+    if ret:
+        cv2.imwrite(TMP_IMG_PATH  + filename, img)
+    video_cap.release()
+    cv2.destroyAllWindows()
 
     if os.path.exists(TMP_IMG_PATH + filename):
         is_updated = True
@@ -35,10 +44,8 @@ if __name__ == '__main__':
     delay_seconds = rospy.get_param("~min_update_interval",60)
     device_name = rospy.get_param("~device_name",'/dev/video0')
     TMP_IMG_PATH = '/home/pi/tmp_imgs/{}/'.format(rospy.get_param("~camera_name",'aerial_image'))
-    rospy.loginfo("show delay_seconds:{}".format(delay_seconds))
 
     while True:
-        rospy.loginfo("image_saver_loop")
         is_updated, file_path = save_image(device_name,TMP_IMG_PATH)
         if is_updated:
             rospy.loginfo(file_path)

@@ -44,7 +44,7 @@ if __name__ == '__main__':
     def desired_callback(item):
         if item.data is not NULL_SETPOINT_SENTINEL:
             command_pub.publish(item)
-            state_pub.publish(item)
+            #state_pub.publish(item)
 
     desired_sub = rospy.Subscriber(desired_sub_name, Float64, desired_callback)
 

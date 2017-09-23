@@ -45,6 +45,8 @@ PwmActuator led_white_1(41, true, 0);
 PwmActuator led_red_1(42, true, 0);
 BinaryActuator heater_core_1_1(43, true, 10000);
 ToneActuator chiller_compressor_1(9, false, 140, -1);
+BinaryActuator led_all_1(8, false, 10000);
+bool led_all_cmd;
 
 // Message string
 String message = "";
@@ -104,6 +106,7 @@ void setup() {
   beginModule(led_red_1, "LED Red");
   beginModule(heater_core_1_1, "Heater Core #1");
   beginModule(chiller_compressor_1, "Chiller Compressor #1");
+  beginModule(led_all_1, "LED ALL #1");
 }
 
 
@@ -186,6 +189,10 @@ void actuatorLoop(){
   if(splitMessages[0] != "0"){
     return;
   }
+  float led_blue_cmd = splitMessages[13].toFloat();
+  float led_white_cmd = splitMessages[14].toFloat();
+  float led_red_cmd = splitMessages[15].toFloat();
+
   pump_1_nutrient_a_1.set_cmd(splitMessages[1].toFloat());        // DoserPump float flow_rate
   pump_2_nutrient_b_1.set_cmd(splitMessages[2].toFloat());        // DoserPump float flow_rate
   pump_3_ph_up_1.set_cmd(str2bool(splitMessages[3]));             // PulseActuator bool
@@ -198,11 +205,19 @@ void actuatorLoop(){
   water_aeration_pump_1.set_cmd(str2bool(splitMessages[10]));     // BinaryActuator bool
   water_circulation_pump_1.set_cmd(str2bool(splitMessages[11]));  // BinaryActuator bool
   chamber_fan_1.set_cmd(str2bool(splitMessages[12]));             // BinaryActuator bool
-  led_blue_1.set_cmd(splitMessages[13].toFloat());                // PwmActuator float 0-1
-  led_white_1.set_cmd(splitMessages[14].toFloat());               // PwmActuator float 0-1
-  led_red_1.set_cmd(splitMessages[15].toFloat());                 // PwmActuator float 0-1
+  led_blue_1.set_cmd(led_blue_cmd);                // PwmActuator float 0-1
+  led_white_1.set_cmd(led_white_cmd);               // PwmActuator float 0-1
+  led_red_1.set_cmd(led_red_cmd);                 // PwmActuator float 0-1
   heater_core_1_1.set_cmd(str2bool(splitMessages[16]));           // BinaryActuator bool
   chiller_compressor_1.set_cmd(str2bool(splitMessages[17]));      // ToneActuator bool on/off
+  if(led_blue_cmd + led_white_cmd + led_red_cmd > 0){
+    led_all_cmd = true;
+  }
+  else{
+    led_all_cmd = false;
+  }
+  led_all_1.set_cmd(led_all_cmd);             // BinaryActuator bool
+
 }
 
 // Run the update loop
@@ -224,6 +239,7 @@ void updateLoop(){
   led_red_1.update();
   heater_core_1_1.update();
   chiller_compressor_1.update();
+  led_all_1.update();
 
   am2315_1.update();
   mhz16_1.update();

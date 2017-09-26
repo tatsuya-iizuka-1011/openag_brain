@@ -23,9 +23,10 @@ def save_image(device_name, TMP_IMG_PATH):
     video_cap = cv2.VideoCapture(device_number)
     if not video_cap.isOpened():
         rospy.logwarn('{} cannot be open'.format(device_name))
-    ret, img = video_cap.read()
-    if ret:
-        cv2.imwrite(TMP_IMG_PATH  + filename, img)
+    else:
+        ret, img = video_cap.read()
+        if ret:
+            cv2.imwrite(TMP_IMG_PATH  + filename, img)
     video_cap.release()
     cv2.destroyAllWindows()
 

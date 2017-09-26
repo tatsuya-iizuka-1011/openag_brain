@@ -50,17 +50,24 @@ class ActuatorPersistence():
         #i = 0
         for  i, actuator_name  in enumerate(self.last_actutator_state):
             if self.last_actutator_state[actuator_name] != actuator_values[i]:
-                self.saveToDB(actuator_name, actuator_values[i], curr_time)
+                self.save_data(actuator_name, actuator_values[i], curr_time)
                 self.last_actutator_state[actuator_name] = actuator_values[i]
 
-    def saveToDB(self, actuator_name, actuator_value, curr_time):
-       # rospy.loginfo('inside func saveToDB')
+    def save_data(self, actuator_name, actuator_value, curr_time):
+       # rospy.loginfo('inside func save_data')
         rospy.loginfo('act_name:{},act_val:{}, curr_time:{}'.format(actuator_name,actuator_value, curr_time))
+        #add pfc_run_id
+        if rospy.has_param('pfc_run_id'):
+            pfc_run_id = rospy.get_param('/pfc_run_id')
+        else:
+            pfc_run_id = "None"
+
         point ={
             "environment": self.environment,
             "variable": actuator_name,
             "value": actuator_value,
-            "timestamp": curr_time
+            "timestamp": curr_time,
+            "pfc_run_id":pfc_run_id
         }
         point_id, point_rev = self.db.save(point)
         rospy.loginfo("data is saved")

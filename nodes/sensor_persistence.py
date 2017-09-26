@@ -56,6 +56,11 @@ class TopicPersistence:
             delta_val = value - self.last_value
             if abs(delta_val / self.last_value) <= 0.01:
                 return
+        #add pfc_run_id
+        if rospy.has_param('pfc_run_id'):
+            pfc_run_id = rospy.get_param('/pfc_run_id')
+        else:
+            pfc_run_id = "None"
 
         # Save the data point
         point = EnvironmentalDataPoint({
@@ -63,7 +68,8 @@ class TopicPersistence:
             "variable": self.variable,
             "is_desired": self.is_desired,
             "value": value,
-            "timestamp": curr_time
+            "timestamp": curr_time,
+            "pfc_run_id":pfc_run_id
         })
         point_id = gen_doc_id(curr_time)
         self.db[point_id] = point

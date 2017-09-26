@@ -167,6 +167,7 @@ class RecipeHandler:
                 "There is already a recipe running. Please stop it "
                 "before attempting to start a new one"
             )
+        self.set_pfc_run_id()
         return True, "Success"
 
     def stop_recipe_service(self, data):
@@ -250,6 +251,12 @@ class RecipeHandler:
         })
         doc_id = gen_doc_id(rospy.get_time())
         self.env_data_db[doc_id] = doc
+
+    def set_pfc_run_id(self):
+        pfc_run_id = 'rosrunid:{}=recipeid:{}'.format(rospy.get_param('/run_id'),self.__recipe["_id"])
+        rospy.set_param('/pfc_run_id',pfc_run_id)
+
+
 
 
 #------------------------------------------------------------------------------

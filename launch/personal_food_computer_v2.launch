@@ -3,6 +3,7 @@
 
   <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_v2.yaml" />
   <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_var_types.yaml" ns="var_types"/>
+  <param name="pfc_run_id" type="str" value="None"/>
   <group ns="$(arg environment_1)">
     <node pkg="openag_brain" type="linear_controller.py" name="water_level_high_controller_1">
       <param name="variable" value="water_level_high" type="str"/>
@@ -40,12 +41,14 @@
       <param name="min_update_interval" value="3600" type="int"/>
     </node>
     -->
+    <!-- red and blue LED is no longer used 
     <node pkg="openag_brain" type="direct_controller.py" name="light_controller_red_1">
       <param name="variable" value="light_intensity_red" type="str"/>
     </node>
     <node pkg="openag_brain" type="direct_controller.py" name="light_controller_blue_1">
       <param name="variable" value="light_intensity_blue" type="str"/>
     </node>
+    -->
     <node pkg="openag_brain" type="direct_controller.py" name="light_controller_white_1">
       <param name="variable" value="light_intensity_white" type="str"/>
     </node>
@@ -64,13 +67,14 @@
       <param name="max_update_interval" value="600" type="int"/>
       <param name="min_update_interval" value="5" type="int"/>
     </node>
-    <!-- capture images  -->
+    <!-- capture images-->
     <node pkg="openag_brain" type="image_saver.py" name="aerial_saver">
         <param name="min_update_interval" value="60" type="int"/>
     </node>
     <node pkg="openag_brain" type="image_persistence.py" name="image_persistence">
         <param name="min_update_interval" value="3600" type="int"/>
     </node>
+
     <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
       <param name="publisher_rate_hz" value="1" type="int"/>
       <param name="baud_rate" value="115200" type="int"/>

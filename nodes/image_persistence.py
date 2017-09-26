@@ -61,11 +61,18 @@ class ImagePersistence:
         filename = file_path.data.split('/')[-1]
         dst = IMAGE_DATABASE_PATH + "{}".format(filename)
         copyfile(file_path.data, dst)
+        #add pfc_run_id
+        if rospy.has_param('pfc_run_id'):
+            pfc_run_id = rospy.get_param('/pfc_run_id')
+        else:
+            pfc_run_id = "None"
+
         point = {
             "environment": "environement_1",
             "variable": "airial_image",
             "value": dst,
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "pfc_run_id":pfc_run_id
         }
         point_id, point_rev = self.db.save(point)
         rospy.loginfo('image data is saved in {}'.format(dst))

@@ -12,7 +12,6 @@ import rospy
 
 ACTUATOR_DATA_POINT = 'actuator_data_point'
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
-#PFC_RUN_ID = '/pfc_run_id'
 
 
 actuator_init_state =  OrderedDict([
@@ -45,13 +44,7 @@ class ActuatorPersistence():
         self.last_actutator_state= actuator_init_state
         self.last_time = time.time()
         self.sub = rospy.Subscriber(topic, topic_type, self.on_data)
-    '''
-    @property
-    def pfc_run_id(self):
-        #add pfc_run_id
-        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else "~"
-        return pfc_run_id
-    '''
+
     def on_data(self, data):
         message = data.data.strip('\n')
         actuator_values = message.split(',')
@@ -71,7 +64,6 @@ class ActuatorPersistence():
             "variable": actuator_name,
             "value": actuator_value,
             "timestamp": curr_time
-            #"pfc_run_id":self.pfc_run_id
         }
         point_id, point_rev = self.db.save(point)
         rospy.loginfo("data is saved")

@@ -36,7 +36,6 @@ CAMERA_VARIABLES = create_variables(rospy.get_param('/var_types/camera_variables
 
 IMAGE_DATABASE_PATH = "/home/iizuka/ImageDatabase/aerial_image/"
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
-#PFC_RUN_ID = '/pfc_run_id'
 
 server = 'foodcomputer-db.akg.t.u-tokyo.ac.jp'
 port = 22
@@ -57,13 +56,6 @@ class ImagePersistence:
         self.sub = rospy.Subscriber(topic, String, self.on_image)
         self.ssh = ssh
 
-    '''
-    @property
-    def pfc_run_id(self):
-        #add pfc_run_id
-        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else ""
-        return pfc_run_id
-    '''
 
     def on_image(self, file_path):
         # Rate limit
@@ -85,7 +77,6 @@ class ImagePersistence:
             "variable": "airial_image",
             "value": dst,
             "timestamp": time.time()
-            #"pfc_run_id":self.pfc_run_id
         }
         point_id, point_rev = self.db.save(point)
         rospy.loginfo('image data is saved in {}'.format(dst))

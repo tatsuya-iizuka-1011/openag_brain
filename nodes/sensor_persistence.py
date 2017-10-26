@@ -24,7 +24,6 @@ from openag_brain.load_env_var_types import create_variables
 # sensors and actuators
 ENVIRONMENT_VARIABLES = create_variables(rospy.get_param('/var_types/environment_variables'))
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
-#PFC_RUN_ID = '/pfc_run_id'
 
 
 class TopicPersistence:
@@ -42,13 +41,6 @@ class TopicPersistence:
         self.max_update_interval = max_update_interval
         self.min_update_interval = min_update_interval
 
-    '''
-    @property
-    def pfc_run_id(self):
-        #add pfc_run_id
-        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else "~"
-        return pfc_run_id
-    '''
 
     def on_data(self, item):
         curr_time = time.time()
@@ -73,7 +65,6 @@ class TopicPersistence:
             "is_desired": self.is_desired,
             "value": value,
             "timestamp": curr_time
-            #"pfc_run_id":self.pfc_run_id
         }
 
         point_id, point_rev = self.db.save(point)

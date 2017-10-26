@@ -106,8 +106,6 @@ class RecipeHandler:
         self.environment = environment
         self.__start_time = None
         self.__recipe = None
-        #self.pfc_run_id = "~"
-        #self.history_db = server['recipe_running_history']
 
     def get_recipe(self):
         with self.lock:
@@ -172,9 +170,6 @@ class RecipeHandler:
                 "There is already a recipe running. Please stop it "
                 "before attempting to start a new one"
             )
-        #added by Tatsuya
-        #self.set_pfc_run_id()
-        #self.save_recipe_running_history()
         return True, "Success"
 
     def stop_recipe_service(self, data):
@@ -258,26 +253,6 @@ class RecipeHandler:
         })
         doc_id = gen_doc_id(rospy.get_time())
         self.env_data_db[doc_id] = doc
-
-    '''
-    def set_pfc_run_id(self):
-        self.pfc_run_id = 'rosrunid:{}=recipe_start_time:{}'.format(rospy.get_param('/run_id'),self.__start_time)
-        rospy.set_param('/pfc_run_id',self.pfc_run_id)
-
-    def save_recipe_running_history(self):
-        """
-        Save the recipe running history to db.
-        """
-        # following
-        curr_time = rospy.get_time()
-        point ={
-            "timestamp": curr_time,
-            "pfc_run_id":self.pfc_run_id
-        }
-        point_id, point_rev = self.history_db.save(point)
-        rospy.loginfo("{}:data is saved in history_db".format(curr_time))
-    '''
-
 
 
 

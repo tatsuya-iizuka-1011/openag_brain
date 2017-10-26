@@ -23,6 +23,8 @@ from openag_brain.load_env_var_types import create_variables
 # Filter a list of environmental variables that are specific to environment
 # sensors and actuators
 ENVIRONMENT_VARIABLES = create_variables(rospy.get_param('/var_types/environment_variables'))
+DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
+#PFC_RUN_ID = '/pfc_run_id'
 
 
 class TopicPersistence:
@@ -40,6 +42,14 @@ class TopicPersistence:
         self.max_update_interval = max_update_interval
         self.min_update_interval = min_update_interval
 
+    '''
+    @property
+    def pfc_run_id(self):
+        #add pfc_run_id
+        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else "~"
+        return pfc_run_id
+    '''
+
     def on_data(self, item):
         curr_time = time.time()
         value = item.data
@@ -56,26 +66,27 @@ class TopicPersistence:
             delta_val = value - self.last_value
             if abs(delta_val / self.last_value) <= 0.01:
                 return
-        #add pfc_run_id
-        if rospy.has_param('pfc_run_id'):
-            pfc_run_id = rospy.get_param('/pfc_run_id')
-        else:
-            pfc_run_id = "None"
-
         # Save the data point
-        point = EnvironmentalDataPoint({
+        point = {
             "environment": self.environment,
             "variable": self.variable,
             "is_desired": self.is_desired,
             "value": value,
-            "timestamp": curr_time,
-            "pfc_run_id":pfc_run_id
-        })
+            "timestamp": curr_time
+            #"pfc_run_id":self.pfc_run_id
+        }
+
+        point_id, point_rev = self.db.save(point)
+        rospy.loginfo("data is saved")
         point_id = gen_doc_id(curr_time)
         self.db[point_id] = point
 
         self.last_value = value
         self.last_time = curr_time
+
+
+
+
 
 
 def create_persistence_objects(
@@ -98,7 +109,8 @@ if __name__ == '__main__':
     db_server = cli_config["local_server"]["url"]
     if not db_server:
         raise RuntimeError("No local database specified")
-    server = Server(db_server)
+    server = Server(DATABASE_SERVER_IP_PORT)
+    #server = Server(db_server)
     rospy.init_node('sensor_persistence')
     try:
         max_update_interval = rospy.get_param("~max_update_interval")

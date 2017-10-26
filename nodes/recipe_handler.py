@@ -48,6 +48,9 @@ RECIPE_START = VariableInfo.from_dict(
 RECIPE_END = VariableInfo.from_dict(
     rospy.get_param('/var_types/recipe_variables/recipe_end'))
 
+DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
+
+
 
 # This builds a dictionary of publisher instances using a
 # "dictionary comprehension" (syntactic sugar for building dictionaries).
@@ -103,6 +106,8 @@ class RecipeHandler:
         self.environment = environment
         self.__start_time = None
         self.__recipe = None
+        #self.pfc_run_id = "~"
+        #self.history_db = server['recipe_running_history']
 
     def get_recipe(self):
         with self.lock:
@@ -167,7 +172,9 @@ class RecipeHandler:
                 "There is already a recipe running. Please stop it "
                 "before attempting to start a new one"
             )
-        self.set_pfc_run_id()
+        #added by Tatsuya
+        #self.set_pfc_run_id()
+        #self.save_recipe_running_history()
         return True, "Success"
 
     def stop_recipe_service(self, data):
@@ -252,9 +259,24 @@ class RecipeHandler:
         doc_id = gen_doc_id(rospy.get_time())
         self.env_data_db[doc_id] = doc
 
+    '''
     def set_pfc_run_id(self):
-        pfc_run_id = 'rosrunid:{}=recipeid:{}'.format(rospy.get_param('/run_id'),self.__recipe["_id"])
-        rospy.set_param('/pfc_run_id',pfc_run_id)
+        self.pfc_run_id = 'rosrunid:{}=recipe_start_time:{}'.format(rospy.get_param('/run_id'),self.__start_time)
+        rospy.set_param('/pfc_run_id',self.pfc_run_id)
+
+    def save_recipe_running_history(self):
+        """
+        Save the recipe running history to db.
+        """
+        # following
+        curr_time = rospy.get_time()
+        point ={
+            "timestamp": curr_time,
+            "pfc_run_id":self.pfc_run_id
+        }
+        point_id, point_rev = self.history_db.save(point)
+        rospy.loginfo("{}:data is saved in history_db".format(curr_time))
+    '''
 
 
 
@@ -273,6 +295,7 @@ if __name__ == '__main__':
     if not db_server:
         raise RuntimeError("No local database specified")
     server = Server(db_server)
+    #server = Server(DATABASE_SERVER_IP_PORT)
 
     namespace = rospy.get_namespace()
     environment = read_environment_from_ns(namespace)

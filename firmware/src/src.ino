@@ -68,7 +68,16 @@ bool beginModule(Module &module, String name);
 bool checkModule(Module &module, String name);
 bool str2bool(String str);
 
+/*
 // These functions are defined in the Arduino.h and are the framework.
+void setup() {
+  beginModule(led_all_1, "LED ALL #1");
+}
+void loop() {
+  led_all_1.set_cmd(true);
+  delay(2000);
+}
+*/
 
 void setup() {
   Serial.begin(115200);

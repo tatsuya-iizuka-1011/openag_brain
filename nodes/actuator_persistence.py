@@ -11,6 +11,9 @@ import time
 import rospy
 
 ACTUATOR_DATA_POINT = 'actuator_data_point'
+DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
+#PFC_RUN_ID = '/pfc_run_id'
+
 
 actuator_init_state =  OrderedDict([
     ("status", 0),
@@ -42,7 +45,13 @@ class ActuatorPersistence():
         self.last_actutator_state= actuator_init_state
         self.last_time = time.time()
         self.sub = rospy.Subscriber(topic, topic_type, self.on_data)
-
+    '''
+    @property
+    def pfc_run_id(self):
+        #add pfc_run_id
+        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else "~"
+        return pfc_run_id
+    '''
     def on_data(self, data):
         message = data.data.strip('\n')
         actuator_values = message.split(',')
@@ -56,18 +65,13 @@ class ActuatorPersistence():
     def save_data(self, actuator_name, actuator_value, curr_time):
        # rospy.loginfo('inside func save_data')
         rospy.loginfo('act_name:{},act_val:{}, curr_time:{}'.format(actuator_name,actuator_value, curr_time))
-        #add pfc_run_id
-        if rospy.has_param('pfc_run_id'):
-            pfc_run_id = rospy.get_param('/pfc_run_id')
-        else:
-            pfc_run_id = "None"
 
         point ={
             "environment": self.environment,
             "variable": actuator_name,
             "value": actuator_value,
-            "timestamp": curr_time,
-            "pfc_run_id":pfc_run_id
+            "timestamp": curr_time
+            #"pfc_run_id":self.pfc_run_id
         }
         point_id, point_rev = self.db.save(point)
         rospy.loginfo("data is saved")
@@ -78,7 +82,8 @@ if __name__ == "__main__":
     db_server = cli_config["local_server"]["url"]
     if not db_server:
         raise RuntimeError("No local database specified")
-    server = Server(db_server)
+    server = Server(DATABASE_SERVER_IP_PORT)
+    #server = Server(db_server)
     db = server['actuator_data_point']
     rospy.init_node('actuator_persistence')
     #environment_id = read_environment_from_ns(rospy.get_namespace())

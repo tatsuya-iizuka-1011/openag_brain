@@ -12,6 +12,10 @@ for the environment are streams of images from connected webcams.
 import time
 import rospy
 import requests
+
+import paramiko
+from scp import SCPClient
+
 from shutil import copyfile
 from PIL import Image
 from couchdb import Server
@@ -30,8 +34,13 @@ PLANT_DATA_POINT = 'plant_data_point'
 # Filter a list of environmental variables that are specific to camera
 CAMERA_VARIABLES = create_variables(rospy.get_param('/var_types/camera_variables'))
 
-IMAGE_DATABASE_PATH = "/home/pi/ImageDatabase/aerial_image/"
+IMAGE_DATABASE_PATH = "/home/iizuka/ImageDatabase/aerial_image/"
+DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
+#PFC_RUN_ID = '/pfc_run_id'
 
+server = 'foodcomputer-db.akg.t.u-tokyo.ac.jp'
+port = 22
+user = 'iizuka'
 
 class ImagePersistence:
     image_format_mapping = {
@@ -39,13 +48,22 @@ class ImagePersistence:
         "rgba8": "RGBA"
     }
 
-    def __init__(self, db, topic, variable, environment, min_update_interval):
+    def __init__(self, db, topic, variable, environment, min_update_interval,ssh):
         self.db = db
         self.variable = variable
         self.environment = environment
         self.min_update_interval = min_update_interval
         self.last_update = 0
         self.sub = rospy.Subscriber(topic, String, self.on_image)
+        self.ssh = ssh
+
+    '''
+    @property
+    def pfc_run_id(self):
+        #add pfc_run_id
+        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else ""
+        return pfc_run_id
+    '''
 
     def on_image(self, file_path):
         # Rate limit
@@ -60,28 +78,38 @@ class ImagePersistence:
         rospy.loginfo(file_path.data)
         filename = file_path.data.split('/')[-1]
         dst = IMAGE_DATABASE_PATH + "{}".format(filename)
-        copyfile(file_path.data, dst)
-        #add pfc_run_id
-        if rospy.has_param('pfc_run_id'):
-            pfc_run_id = rospy.get_param('/pfc_run_id')
-        else:
-            pfc_run_id = "None"
-
+        self.scp_image(self.ssh, file_path.data, dst)
+        #copyfile(file_path.data, dst)
         point = {
             "environment": "environement_1",
             "variable": "airial_image",
             "value": dst,
-            "timestamp": time.time(),
-            "pfc_run_id":pfc_run_id
+            "timestamp": time.time()
+            #"pfc_run_id":self.pfc_run_id
         }
         point_id, point_rev = self.db.save(point)
         rospy.loginfo('image data is saved in {}'.format(dst))
 
+
+    def scp_image(self, ssh, src,dist):
+        scp = SCPClient(ssh.get_transport())
+        scp.put(src, dist)
+        scp.close()
+
+def createSSHClient(server, port, user):
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(server, port, user)
+    return client
+
 if __name__ == '__main__':
+    ssh = createSSHClient(server, port, user)
     db_server = cli_config["local_server"]["url"]
     if not db_server:
         raise RuntimeError("No database server specified")
-    server = Server(db_server)
+    server = Server(DATABASE_SERVER_IP_PORT)
+    #server = Server(db_server)
     rospy.init_node('image_persistence_1')
     environment_id = read_environment_from_ns(rospy.get_namespace())
     try:
@@ -98,6 +126,7 @@ if __name__ == '__main__':
         persistence_objs.append(ImagePersistence(
             db=plt_var_db, topic=topic, variable=variable,
             environment=environment_id,
-            min_update_interval=min_update_interval
+            min_update_interval=min_update_interval,
+            ssh = ssh
         ))
     rospy.spin()

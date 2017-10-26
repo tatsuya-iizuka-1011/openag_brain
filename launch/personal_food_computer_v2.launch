@@ -21,6 +21,7 @@
     </node>
     -->
     <node pkg="openag_brain" type="topic_filter.py" name="topic_filter_1"/>
+    <!--
     <node pkg="openag_brain" type="pid.py" name="air_temperature_controller_1">
       <param name="deadband_width" value="0.5" type="double"/>
       <param name="windup_limit" value="1000" type="double"/>
@@ -31,6 +32,7 @@
       <param name="Ki" value="0" type="double"/>
       <param name="Kd" value="1" type="double"/>
     </node>
+    -->
     <node pkg="openag_brain" type="recipe_handler.py" name="recipe_handler_1"/>
     <node pkg="openag_brain" type="recipe_persistence.py" name="recipe_persistence_1"/>
     <!--<node pkg="openag_brain" type="video_writer.py" name="video_writer_1">
@@ -41,7 +43,7 @@
       <param name="min_update_interval" value="3600" type="int"/>
     </node>
     -->
-    <!-- red and blue LED is no longer used 
+    <!-- red and blue LED is no longer used
     <node pkg="openag_brain" type="direct_controller.py" name="light_controller_red_1">
       <param name="variable" value="light_intensity_red" type="str"/>
     </node>
@@ -86,5 +88,7 @@
 
   <node pkg="openag_brain" type="api.py" name="api"/>
   <node pkg="openag_brain" type="sensor_info_publisher.py" name="sensor_info_publisher"/>
+    <!--
   <test pkg="openag_brain" test-name="test_pub_desired_topics" type="test_pub_desired_topics.py" ns="$(arg environment_1)" time-limit="600.0"/>
+  -->
 </launch>

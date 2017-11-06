@@ -8,7 +8,7 @@ class DoserPump : public Module {
   public:
     // Constructor
     // TODO: Test the pumps and find their lower and upper bounds
-    DoserPump(int pin, bool is_active_low, float lowerBound=10, float upperBound=4764);
+    DoserPump(int pin, bool is_active_low, float lowerBound=10, float upperBound=8450);
 
     // Public functions
     uint8_t begin();

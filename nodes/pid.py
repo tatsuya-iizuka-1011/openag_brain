@@ -46,9 +46,10 @@ class PID:
             return
 
         error = self.set_point - state
-
+        '''
         if abs(error) < self.deadband_width:
             return 0
+        '''
 
         p_value = self.Kp * error
         d_value = self.Kd * (error - self.last_error)
@@ -59,6 +60,9 @@ class PID:
 
         res = p_value + i_value + d_value
         res = min(self.upper_limit, max(self.lower_limit, res))
+        # tatsuya added
+        if abs(res) < self.deadband_width:
+            return 0
 
         return res
 

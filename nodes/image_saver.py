@@ -38,6 +38,27 @@ def save_image(device_name, TMP_IMG_PATH):
 
     return is_updated, TMP_IMG_PATH + filename
 
+def save_image_with_fswebcam(device_name, TMP_IMG_PATH):
+    #sudo fswebcam --no-banner -d /dev/video0 -r 1280x1024 /var/www/html/img.jpg -F 30
+    is_updated = False
+    curr_time = int(time.time())
+    filename = '{}.jpg'.format(str(curr_time))
+    FNULL = open(os.devnull, 'w')
+    try:
+        subprocess.call(['sudo', 'fswebcam', '--no-banner',  '-d', device_name, '-r', '1280x1024', TMP_IMG_PATH  + filename, '-F', '30' ], stdout=FNULL,stderr=subprocess.STDOUT)
+        print('fswebcam save')
+    except subprocess.CalledProcessError, e:
+        print("fswebcam error at  {}".format(curr_time))
+        pass
+
+    if os.path.exists(TMP_IMG_PATH + filename):
+        is_updated = True
+        for img_file in os.listdir(TMP_IMG_PATH):
+            if img_file != filename:
+                os.remove(TMP_IMG_PATH + img_file)
+
+    return is_updated, TMP_IMG_PATH + filename
+
 
 if __name__ == '__main__':
     rospy.init_node('image_saver')
@@ -47,7 +68,7 @@ if __name__ == '__main__':
     TMP_IMG_PATH = '/home/pi/tmp_imgs/{}/'.format(rospy.get_param("~camera_name",'aerial_image'))
 
     while True:
-        is_updated, file_path = save_image(device_name,TMP_IMG_PATH)
+        is_updated, file_path = save_image_with_fswebcam(device_name,TMP_IMG_PATH)
         if is_updated:
             rospy.loginfo(file_path)
             pub.publish(file_path)

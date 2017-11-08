@@ -68,7 +68,7 @@ class TopicPersistence:
         }
 
         point_id, point_rev = self.db.save(point)
-        rospy.loginfo("data is saved")
+        rospy.loginfo("{} saved".format(self.variable))
         point_id = gen_doc_id(curr_time)
         self.db[point_id] = point
 

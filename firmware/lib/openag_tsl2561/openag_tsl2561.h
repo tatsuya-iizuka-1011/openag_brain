@@ -37,7 +37,7 @@ class Tsl2561 : public Module {
     Adafruit_TSL2561_Unified tsl;
     uint32_t _time_of_last_query;
     bool _waiting_for_response;
-    const static uint32_t _min_update_interval = 2000;
+    const static uint32_t _min_update_interval = 40010;
 
     // Status codes
     static const uint8_t CODE_COULDNT_FIND_ADDRESS = 1;

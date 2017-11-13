@@ -50,7 +50,7 @@ class Am2315 : public Module {
     float _air_temperature;
     float _air_humidity;
     uint32_t _time_of_last_reading;
-    const static uint32_t _min_update_interval = 2000;
+    const static uint32_t _min_update_interval = 45010;
     const static int _i2c_address = 0x5c;
     const static int _read_register = 0x03;
 

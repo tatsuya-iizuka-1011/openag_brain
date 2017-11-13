@@ -20,7 +20,7 @@ class MHZ16 : public Module {
     uint32_t _init_time;
     bool _initializing;
     uint32_t _time_of_last_reading;
-    const static uint32_t _min_update_interval = 2000;
+    const static uint32_t _min_update_interval = 50000;
     bool _is_on;
     const static uint32_t _leave_off_for = 2000;
     uint32_t _time_of_last_power_cycle;

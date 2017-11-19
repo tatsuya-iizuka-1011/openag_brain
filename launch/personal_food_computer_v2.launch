@@ -8,8 +8,8 @@
     <node pkg="openag_brain" type="linear_controller.py" name="water_level_high_controller_1">
       <param name="variable" value="water_level_high" type="str"/>
     </node>
-    <!--
-    <node pkg="openag_brain" type="pid.py" name="water_potential_hydrogen_controller_1">
+
+    <node pkg="openag_brain" type="pid_ph.py" name="water_potential_hydrogen_controller_1">
       <param name="deadband_width" value="0.5" type="double"/>
       <param name="windup_limit" value="10" type="double"/>
       <param name="upper_limit" value="1" type="double"/>
@@ -17,9 +17,12 @@
       <param name="variable" value="water_potential_hydrogen" type="str"/>
       <param name="Kp" value="1" type="double"/>
       <param name="Ki" value="0.1" type="double"/>
-      <param name="deadband_width" value="1.0" type="double"/>
+      <param name="deadband_width" value="0.3" type="double"/>
+      <param name="cmd_interval" value="0" type="double"/>
+      <param name="set_point_shutoff" value="3" type="double"/>
+      <param name="default_command_value" value="0" type="double"/>
     </node>
-  -->
+
 
 
     <node pkg="openag_brain" type="topic_filter.py" name="topic_filter_1"/>

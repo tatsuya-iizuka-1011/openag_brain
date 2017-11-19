@@ -21,13 +21,14 @@ accepts an `upper_limit` and `lower_limit` to bound the control effort output.
 Specifically, commands with absolute value less than `deadband_width` will be
 changed to 0.
 """
+import time
 import rospy
 from std_msgs.msg import Float64, String
 
-class PID:
+class PID_PH:
     """ Discrete PID control """
     def __init__(self, Kp=0, Ki=0, Kd=0, upper_limit=1, lower_limit=-1,
-            windup_limit=1000, deadband_width=0):
+            windup_limit=1000, deadband_width=0, cmd_interval=30, set_point_shutoff=5, default_command_value=0):
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
@@ -35,10 +36,16 @@ class PID:
         self.lower_limit = lower_limit
         self.windup_limit = windup_limit
         self.deadband_width = deadband_width
-
         self.set_point = None
         self.last_error = 0
         self.integrator = 0
+
+        curr_time = time.time()
+        self.last_cmd = curr_time
+        self.cmd_interval = cmd_interval
+        self.last_set_point = curr_time
+        self.set_point_shutoff = set_point_shutoff
+        self.default_command_value = default_command_value
 
     def update(self, state):
         # If setpoint was made null, or was already null, do nothing.
@@ -60,14 +67,11 @@ class PID:
 
         res = p_value + i_value + d_value
         res = min(self.upper_limit, max(self.lower_limit, res))
-        # tatsuya added
-        if abs(res) < self.deadband_width:
-            return 0
 
         return res
 
 if __name__ == '__main__':
-    rospy.init_node('pid')
+    rospy.init_node('pid_ph')
 
     # Make sure that we're under an environment namespace.
     namespace = rospy.get_namespace()
@@ -79,7 +83,7 @@ if __name__ == '__main__':
 
     param_names = [
         "Kp", "Ki", "Kd", "lower_limit", "upper_limit", "windup_limit",
-        "deadband_width"
+        "deadband_width", "cmd_interval", "set_point_shutoff", "cmd = pid_ph.default_command_value"
     ]
     param_values = {}
     for param_name in param_names:
@@ -87,7 +91,7 @@ if __name__ == '__main__':
         if rospy.has_param(private_param_name):
             param_values[param_name] = rospy.get_param(private_param_name)
 
-    pid = PID(**param_values)
+    pid_ph = PID_PH(**param_values)
 
     pub_name = "cmd"
     state_sub_name = "state"
@@ -102,19 +106,28 @@ if __name__ == '__main__':
     pub = rospy.Publisher(pub_name, Float64, queue_size=10)
 
     def state_callback(item):
-        cmd = pid.update(item.data)
+        cmd = pid_ph.update(item.data)
+        curr_time = time.time()
         if cmd is None:
             return
+        if curr_time > pid_ph.last_set_point + pid_ph.set_point_shutoff:
+            pid_ph.set_point = None
+            cmd = pid_ph.default_command_value
+        if curr_time < pid_ph.last_cmd + pid_ph.cmd_interval:
+            cmd = pid_ph.default_command_value
+        else:
+            pid_ph.last_cmd = curr_time
         pub.publish(cmd)
 
     def set_point_callback(item):
-        pid.set_point = item.data
+        pid_ph.set_point = item.data
+        pid_ph.last_set_point = time.time()
 
     # When we receive the recipe end message, reset this PID controller to its default values.
     # This disables the set point so the controller will just idle until it is set by a new recipe.
     def recipe_end_callback(item):
-        pid = PID(**param_values)
-        pid.set_point = None
+        pid_ph = PID_PH(**param_values)
+        pid_ph.set_point = None
 
     recipe_end_topic = "{ns}recipe_end/desired".format(ns=rospy.get_namespace())
     recipe_end_sub = rospy.Subscriber(recipe_end_topic, String, recipe_end_callback)

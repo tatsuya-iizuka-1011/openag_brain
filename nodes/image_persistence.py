@@ -37,7 +37,7 @@ CAMERA_VARIABLES = create_variables(rospy.get_param('/var_types/camera_variables
 IMAGE_DATABASE_PATH = "/home/iizuka/ImageDatabase/aerial_image/"
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
 
-server = 'foodcomputer-db.akg.t.u-tokyo.ac.jp'
+scp_server = 'foodcomputer-db.akg.t.u-tokyo.ac.jp'
 port = 22
 user = 'iizuka'
 
@@ -47,14 +47,17 @@ class ImagePersistence:
         "rgba8": "RGBA"
     }
 
-    def __init__(self, db, topic, variable, environment, min_update_interval,ssh):
+    def __init__(self, db, topic, variable, environment, min_update_interval,scp_server, port, user):
         self.db = db
         self.variable = variable
         self.environment = environment
         self.min_update_interval = min_update_interval
         self.last_update = 0
         self.sub = rospy.Subscriber(topic, String, self.on_image)
-        self.ssh = ssh
+        self.scp_server = scp_server
+        self.port = port
+        self.user = user
+
 
 
     def on_image(self, file_path):
@@ -64,38 +67,43 @@ class ImagePersistence:
             return
         self.last_update = curr_time
 
-        rospy.loginfo("Posting image")
-        #filename = str(time.time())
-
         rospy.loginfo(file_path.data)
         filename = file_path.data.split('/')[-1]
-        dst = IMAGE_DATABASE_PATH + "{}".format(filename)
-        self.scp_image(self.ssh, file_path.data, dst)
-        #copyfile(file_path.data, dst)
-        point = {
-            "environment": "environement_1",
-            "variable": "airial_image",
-            "value": dst,
-            "timestamp": time.time()
-        }
-        point_id, point_rev = self.db.save(point)
-        rospy.loginfo('image data is saved in {}'.format(dst))
+        dist = IMAGE_DATABASE_PATH + "{}".format(filename)
+        src = file_path.data
+
+        try:
+            with paramiko.SSHClient() as ssh:
+                ssh.load_system_host_keys()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(self.scp_server, self.port, self.user)
+                self.scp_image(ssh, src, dist)
+                point = {
+                    "environment": "environement_1",
+                    "variable": "airial_image",
+                    "value": dist,
+                    "timestamp": curr_time
+                }
+                point_id, point_rev = self.db.save(point)
+                rospy.loginfo('saved in {}'.format(dist))
+
+        except:
+            print("fail to scp {}".format(filename))
 
 
-    def scp_image(self, ssh, src,dist):
+    def scp_image(self, ssh, src, dist):
         scp = SCPClient(ssh.get_transport())
         scp.put(src, dist)
         scp.close()
 
-def createSSHClient(server, port, user):
+def createSSHClient(scp_server, port, user):
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(server, port, user)
+    client.connect(scp_server, port, user)
     return client
 
 if __name__ == '__main__':
-    ssh = createSSHClient(server, port, user)
     db_server = cli_config["local_server"]["url"]
     if not db_server:
         raise RuntimeError("No database server specified")
@@ -118,6 +126,6 @@ if __name__ == '__main__':
             db=plt_var_db, topic=topic, variable=variable,
             environment=environment_id,
             min_update_interval=min_update_interval,
-            ssh = ssh
+            scp_server=scp_server,port=port,user=user
         ))
     rospy.spin()

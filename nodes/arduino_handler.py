@@ -57,25 +57,6 @@ actuator_csv_headers =  OrderedDict([
     ("heater_core_1_1", bool),
     ("chiller_compressor_1", bool)
 ])
-actuator_default_values =  OrderedDict([
-    ("pump_1_nutrient_a_1",  {"default_value":0.0, "shutoff_sec":2.0}),
-    ("pump_2_nutrient_b_1", {"default_value":0.0, "shutoff_sec":2.0}),
-    ("pump_3_ph_up_1", {"default_value":False, "shutoff_sec":2.0}),
-    ("pump_4_ph_down_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("pump_5_water_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("chiller_fan_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("chiller_pump_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("heater_core_2_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("air_flush_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("water_aeration_pump_1",  {"default_value":True, "shutoff_sec":2.0}),
-    ("water_circulation_pump_1", {"default_value":True, "shutoff_sec":2.0}),
-    ("chamber_fan_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("light_intensity_blue",  {"default_value":0.0, "shutoff_sec":2.0}),
-    ("light_intensity_white",  {"default_value":0.0, "shutoff_sec":2.0}),
-    ("light_intensity_red",  {"default_value":0.0, "shutoff_sec":2.0}),
-    ("heater_core_1_1",  {"default_value":False, "shutoff_sec":2.0}),
-    ("chiller_compressor_1",  {"default_value":False, "shutoff_sec":2.0})
-])
 
 actuator_listen_variables = (
     "air_temperature",
@@ -98,8 +79,6 @@ sensor_state = {}
 
 # Declare this global so our code can be tested!
 serial_connection = None
-error_count =0
-MAX_ERROR_COUNT = 10
 
 ENVIRONMENTAL_VARIABLES = frozenset(
     VariableInfo.from_dict(d)
@@ -186,11 +165,9 @@ def air_temperature_callback(msg): # float -1~1
     if (command > 0):
         for header, type_constructor in up:
             actuator_state[header] = type_constructor(True)
-            actuator_default_values[header]["last_cmd"] = rospy.get_time()
     if (command < 0):
         for header, type_constructor in down:
             actuator_state[header] = type_constructor(True)
-            actuator_default_values[header]["last_cmd"] = rospy.get_time()
 
 
 def water_potential_hydrogen_callback(msg): # float -1 ~ 1
@@ -203,10 +180,8 @@ def water_potential_hydrogen_callback(msg): # float -1 ~ 1
     # Set actuator_state based on command
     if command > 0:
         actuator_state["pump_3_ph_up_1"] = True
-        actuator_default_values["pump_3_ph_up_1"]["last_cmd"] = rospy.get_time()
     elif command < 0:
         actuator_state["pump_4_ph_down_1"] = True
-        actuator_default_values["pump_4_ph_down_1"]["last_cmd"] = rospy.get_time()
 
 
 # nutrient_flora_duo_a is a "Rate" of dosage, so we can just change the dosage
@@ -214,37 +189,31 @@ def water_potential_hydrogen_callback(msg): # float -1 ~ 1
 def nutrient_flora_duo_a_callback(msg): # float
     command = actuator_csv_headers["pump_1_nutrient_a_1"](msg.data)
     actuator_state["pump_1_nutrient_a_1"] = command
-    actuator_default_values["pump_1_nutrient_a_1"]["last_cmd"] = rospy.get_time()
 
 
 def nutrient_flora_duo_b_callback(msg): # float
     command = actuator_csv_headers["pump_2_nutrient_b_1"](msg.data)
     actuator_state["pump_2_nutrient_b_1"] = command
-    actuator_default_values["pump_2_nutrient_b_1"]["last_cmd"] = rospy.get_time()
 
 
 def air_flush_callback(msg): # float 0/1
     command = actuator_csv_headers["air_flush_1"](msg.data)
     actuator_state["air_flush_1"] = float(command)
-    actuator_default_values["air_flush_1"]["last_cmd"] = rospy.get_time()
 
 
 def light_intensity_blue_callback(msg): # float 0~1
     command = actuator_csv_headers["light_intensity_blue"](msg.data)
     actuator_state["light_intensity_blue"] = command
-    actuator_default_values["light_intensity_blue"]["last_cmd"] = rospy.get_time()
 
 
 def light_intensity_white_callback(msg): # float 0~1
     command = actuator_csv_headers["light_intensity_white"](msg.data)
     actuator_state["light_intensity_white"] = command
-    actuator_default_values["light_intensity_white"]["last_cmd"] = rospy.get_time()
 
 
 def light_intensity_red_callback(msg): # float 0~1
     command = actuator_csv_headers["light_intensity_red"](msg.data)
     actuator_state["light_intensity_red"] = command
-    actuator_default_values["light_intensity_red"]["last_cmd"] = rospy.get_time()
 
 
 # The water level sensor is HIGH when dry, which gets passed through the
@@ -257,7 +226,6 @@ def water_level_high_callback(msg): # float 1 / 0
     command = msg.data
     # if the high water level is >= .5, turn the pump on
     actuator_state["pump_5_water_1"] = command >= 0.5
-    actuator_default_values["pump_5_water_1"]["last_cmd"] = rospy.get_time()
 
 
 CALLBACKS = {
@@ -365,7 +333,6 @@ def close_serial():
 def connect_serial():
     timeout_s = 2 / serial_rate_hz # serial port timeout is 2x loop rate
     baud_rate = rospy.get_param("~baud_rate", 115200)
-    error_count = 0
 
     # Initialize the serial connection
     path = "/dev/serial/by-id"
@@ -390,25 +357,6 @@ def connect_serial():
             rospy.logwarn(e)
             rospy.sleep(0.2) #seconds
 
-def update_actuator_state():
-    #This function prevents from actuators eternally operating
-    #although there is no command published.
-    #actuator_state[] is updated only when actuator value is
-    #published to corresponding topic. If there is no commanded
-    #value for a certain time, actuator state turns is overwritten
-    #to a default value.
-    #actuator_default_values
-    curr_time = rospy.get_time()
-    #for actuator in actuator_default_values
-    # update actuator_state if
-    actuator_state["water_aeration_pump_1"] = True
-    actuator_state["water_circulation_pump_1"] = True
-    for variable in actuator_default_values:
-        if curr_time > actuator_default_values[variable]["last_cmd"] + actuator_default_values[variable]["shutoff_sec"]:
-            actuator_state[variable] = actuator_default_values[variable]["default_value"]
-
-
-
 if __name__ == '__main__':
     if TRACE:
         rospy.init_node('arduino_handler', log_level=rospy.DEBUG)
@@ -430,8 +378,8 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
         # These 2 are permanently on.
-        update_actuator_state()
-
+        actuator_state["water_aeration_pump_1"] = True
+        actuator_state["water_circulation_pump_1"] = True
         # Generate the message for the current state (csv headers below):
         # status, pump1, pump2, pump3, pump4, pump5, chiller_fan,
         # chiller_pump, heater_core2, air_flush, water_aeration,
@@ -510,24 +458,12 @@ if __name__ == '__main__':
 
         pairs_or_error = process_message(buf)
         if type(pairs_or_error) is str:
-            error_count += 1
             error_message = pairs_or_error
             ARDUINO_STATUS_PUBLISHER.publish(error_message)
         else:
-            error_count = 0
             pairs = pairs_or_error
             for header, value in pairs:
                 sensor_state[header] = value
-
-        # Help mitigate issue #320: when a sensor goes wonky (AM2315 always
-        # returning code 255), or when the arduino code just stops sending
-        # any data (we always read an empty line or the read times out).
-        # We detect both cases here and reset the serial connection which
-        # reboots the arduino board and hopefully kicks it back into a
-        # working state.
-
-        if error_count >= MAX_ERROR_COUNT:
-            serial_connection = connect_serial()
 
         if publish_time():
             #trace("arduino_handler publish_time")

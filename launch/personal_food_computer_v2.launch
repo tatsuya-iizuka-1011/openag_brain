@@ -52,14 +52,14 @@
       <param name="variable" value="light_intensity_white" type="str"/>
     </node>
     <!-- nutrient pumps -->
-    <
+
     <node pkg="openag_brain" type="direct_controller.py" name="nutrient_flora_duo_a_controller_1">
       <param name="variable" value="nutrient_flora_duo_a" type="str"/>
     </node>
     <node pkg="openag_brain" type="direct_controller.py" name="nutrient_flora_duo_b_controller_1">
       <param name="variable" value="nutrient_flora_duo_b" type="str"/>
     </node>
-    
+
 
     <node pkg="openag_brain" type="direct_controller.py" name="air_flush_controller_1">
       <param name="variable" value="air_flush" type="str"/>

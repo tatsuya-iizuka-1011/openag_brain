@@ -9,7 +9,7 @@
       <param name="variable" value="water_level_high" type="str"/>
     </node>
 
-    <node pkg="openag_brain" type="pid_ph.py" name="water_potential_hydrogen_controller_1">
+    <node pkg="openag_brain" type="pid.py" name="water_potential_hydrogen_controller_1">
       <param name="deadband_width" value="0.5" type="double"/>
       <param name="windup_limit" value="10" type="double"/>
       <param name="upper_limit" value="1" type="double"/>
@@ -35,6 +35,8 @@
       <param name="variable" value="air_temperature" type="str"/>
       <param name="Kp" value="1" type="double"/>
       <param name="deadband_width" value="1.0" type="double"/>
+      <param name="set_point_shutoff" value="10" type="double"/>
+      <param name="default_command_value" value="0" type="double"/>
     </node>
 
     <node pkg="openag_brain" type="recipe_handler.py" name="recipe_handler_1"/>

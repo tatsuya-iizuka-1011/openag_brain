@@ -7,7 +7,7 @@
 class PulseActuator : public Module {
   public:
     // Constructor
-    PulseActuator(int pin, bool is_active_low, int pulse_ms=300, int update_ms=45000);
+    PulseActuator(int pin, bool is_active_low, int pulse_ms=400, int update_ms=30000);
 
     // Public functions
     uint8_t begin();

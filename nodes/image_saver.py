@@ -62,10 +62,13 @@ def save_image_with_fswebcam(device_name, TMP_IMG_PATH):
 
 if __name__ == '__main__':
     rospy.init_node('image_saver')
-    pub = rospy.Publisher('aerial_image/image_updated', String, queue_size=10)
-    delay_seconds = rospy.get_param("~min_update_interval",60)
-    device_name = rospy.get_param("~device_name",'/dev/video0')
-    TMP_IMG_PATH = '/home/pi/tmp_imgs/{}/'.format(rospy.get_param("~camera_name",'aerial_image'))
+    # write exception process not to permit same name topic exist
+    pub_topic_name = rospy.get_param('~image_name', 'aerial_image')
+    delay_seconds = rospy.get_param("~min_update_interval", 60)
+    device_name = rospy.get_param('~device_name', '/dev/video0')
+
+    pub = rospy.Publisher('{}/image_updated'.format(pub_topic_name), String, queue_size=10)
+    TMP_IMG_PATH = '/home/pi/tmp_imgs/{}/'.format(pub_topic_name)
 
     while True:
         is_updated, file_path = save_image_with_fswebcam(device_name,TMP_IMG_PATH)

@@ -89,7 +89,7 @@
     <!-- if using PFC2, assign img_database_path to "/home/iizuka/ImageDatabase2"-->
     <node pkg="openag_brain" type="image_persistence.py" name="image_persistence">
         <param name="min_update_interval" value="3600" type="int"/>
-        <param name="img_database_path" value="/home/iizuka/ImageDatabase" type="str"/>
+        <param name="img_database_path" value="/home/iizuka/ImageDatabase2" type="str"/>
     </node>
 
     <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">

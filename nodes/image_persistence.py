@@ -34,7 +34,7 @@ PLANT_DATA_POINT = 'plant_data_point'
 # Filter a list of environmental variables that are specific to camera
 CAMERA_VARIABLES = create_variables(rospy.get_param('/var_types/camera_variables'))
 
-IMAGE_DATABASE_PATH = "/home/iizuka/ImageDatabase/aerial_image/"
+
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
 
 scp_server = 'foodcomputer-db.akg.t.u-tokyo.ac.jp'
@@ -47,7 +47,7 @@ class ImagePersistence:
         "rgba8": "RGBA"
     }
 
-    def __init__(self, db, topic, variable, environment, min_update_interval,scp_server, port, user):
+    def __init__(self, db, topic, variable, environment, min_update_interval,scp_server, port, user, img_database_path):
         self.db = db
         self.variable = variable
         self.environment = environment
@@ -57,6 +57,8 @@ class ImagePersistence:
         self.scp_server = scp_server
         self.port = port
         self.user = user
+
+        self.dist_path = '{}/{}'.format(img_database_path, variable)
 
 
 
@@ -69,7 +71,7 @@ class ImagePersistence:
 
         rospy.loginfo(file_path.data)
         filename = file_path.data.split('/')[-1]
-        dist = IMAGE_DATABASE_PATH + "{}".format(filename)
+        dist = '{}/{}'.format(self.dist_path, filename)
         src = file_path.data
 
         try:
@@ -79,8 +81,8 @@ class ImagePersistence:
                 ssh.connect(self.scp_server, self.port, self.user)
                 self.scp_image(ssh, src, dist)
                 point = {
-                    "environment": "environement_1",
-                    "variable": "airial_image",
+                    "environment": self.environment,
+                    "variable": self.variable,
                     "value": dist,
                     "timestamp": curr_time
                 }
@@ -120,12 +122,18 @@ if __name__ == '__main__':
         min_update_interval = 3600
     plt_var_db = server[PLANT_DATA_POINT]
     persistence_objs = []
+    img_database_path = rospy.get_param('~img_database_path', "/home/iizuka/ImageDatabase")
     for variable in CAMERA_VARIABLES.itervalues():
         topic = "{}/image_updated".format(variable)
         persistence_objs.append(ImagePersistence(
-            db=plt_var_db, topic=topic, variable=variable,
+            db=plt_var_db,
+            topic=topic,
+            variable=variable,
             environment=environment_id,
             min_update_interval=min_update_interval,
-            scp_server=scp_server,port=port,user=user
+            scp_server=scp_server,
+            port=port,
+            user=user,
+            img_database_path=img_database_path
         ))
     rospy.spin()

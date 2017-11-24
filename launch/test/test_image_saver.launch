@@ -1,5 +1,5 @@
 <launch>
-    <arg name="environment_1" value="environments/environment_1" />
+    <arg name="environment_1" value="environments/test" />
     <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_v2.yaml" />
     <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_var_types.yaml" ns="var_types"/>
     <group ns="environments/test">
@@ -8,8 +8,14 @@
             <param name="device_name" value="/dev/video0" type="str"/>
             <param name="camera_name" value="aerial_image" type="str"/>
         </node>
+        <node pkg="openag_brain" type="image_saver.py" name="frontal_saver">
+            <param name="min_update_interval" value="10" type="int"/>
+            <param name="device_name" value="/dev/video1" type="str"/>
+            <param name="image_name" value="frontal_image" type="str"/>
+        </node>
         <node pkg="openag_brain" type="image_persistence.py" name="image_persistence">
-            <param name="min_update_interval" value="30" type="int"/>
+            <param name="min_update_interval" value="60" type="int"/>
+            <param name="img_database_path" value="/home/iizuka/TestImages" type="str"/>
         </node>
     </group>
 </launch>

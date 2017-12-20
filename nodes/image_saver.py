@@ -77,13 +77,18 @@ if __name__ == '__main__':
     #(light_intensity_red, light_intensity_blue, light_intensity_white) is 1.0
     ligth_pub_name = 'light_intensity_red/commanded'
     light_controller_pub = rospy.Publisher(ligth_pub_name, Float64, queue_size=10)
+    led_on_flag = 'led_on_flag'
+    rospy.set_param(led_on_flag, 0)
 
     while True:
         #turn on led panel to success catpuring image even if it is night.
+        rospy.set_param(led_on_flag, rospy.get_param(led_on_flag)+1)
         light_controller_pub.publish(1.0)
         time.sleep(LIGHT_CAPATURE_INTERVAL)
         is_updated, file_path = save_image_with_fswebcam(device_name,TMP_IMG_PATH)
-        light_controller_pub.publish(0.0)
+        rospy.set_param(led_on_flag, rospy.get_param(led_on_flag)-1)
+        if rospy.get_param(led_on_flag) < 1:
+            light_controller_pub.publish(0.0)
         if is_updated:
             rospy.loginfo(file_path)
             pub.publish(file_path)

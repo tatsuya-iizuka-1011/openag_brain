@@ -14,7 +14,6 @@
 #include <openag_tsl2561.h>
 
 // Sensor Instances
-/*
 Am2315 am2315_1;
 MHZ16 mhz16_1(77);
 Ds18b20 ds18b20_1(5);
@@ -23,7 +22,6 @@ BinarySensor water_level_sensor_low_1(4, false);
 AtlasPh atlas_ph_1(99);
 AtlasEc atlas_ec_1(100);
 Tsl2561 tsl2561_1(12345);
-*/
 
 
 
@@ -58,7 +56,7 @@ const unsigned int MESSAGE_LENGTH = 500;
 
 // Main logic
 void actuatorLoop();
-//void sensorLoop();
+void sensorLoop();
 void updateLoop();
 
 // Utility functions
@@ -90,7 +88,6 @@ void setup() {
   message.reserve(MESSAGE_LENGTH);
 
   // Begin sensors
-  /*
   beginModule(am2315_1, "AM2315 #1");
   beginModule(mhz16_1, "MHZ16 #1");
   beginModule(ds18b20_1, "DS18B20 #1");
@@ -99,7 +96,7 @@ void setup() {
   beginModule(atlas_ph_1, "Atlas pH #1");
   beginModule(atlas_ec_1, "Atlas EC #1");
   beginModule(tsl2561_1, "TSL2561 #1");
-*/
+
   // Begin Actuators
   beginModule(pump_1_nutrient_a_1, "Pump 1, Nutrient A");
   beginModule(pump_2_nutrient_b_1, "Pump 2, Nutrient B");
@@ -135,12 +132,11 @@ void loop() {
 
   checkActuatorLoop();
   actuatorLoop();
-  /*
+
   bool allSensorSuccess = checkSensorLoop();
   if(allSensorSuccess){
     sensorLoop();
   }
-  */
 
 }
 
@@ -253,7 +249,7 @@ void updateLoop(){
   heater_core_1_1.update();
   chiller_compressor_1.update();
   led_all_1.update();
-  /*
+
   am2315_1.update();
   mhz16_1.update();
   ds18b20_1.update();
@@ -262,7 +258,6 @@ void updateLoop(){
   atlas_ph_1.update();
   atlas_ec_1.update();
   tsl2561_1.update();
-  */
 }
 
 bool checkActuatorLoop(){
@@ -288,7 +283,7 @@ bool checkActuatorLoop(){
 
   return allActuatorSuccess;
 }
-/*
+
 bool checkSensorLoop(){
   bool allSensorSuccess = true;
 
@@ -322,7 +317,7 @@ void sensorLoop(){
   // Wait until done writing.
   Serial.flush();
 }
-*/
+
 void send_invalid_message_length_error(String msg) {
   String clean_msg = msg;
   clean_msg.replace(',', '_');

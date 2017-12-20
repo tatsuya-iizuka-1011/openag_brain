@@ -5,11 +5,12 @@ when the image file is successfully saved, this ROS node publish the file path t
 """
 
 import rospy
-from std_msgs.msg import  String
+from std_msgs.msg import  String, Float64
 import time, os, subprocess, sys
 import cv2
 
 DEVICE_VIDEO_PATH = '/dev/video'
+LIGHT_CAPATURE_INTERVAL = 2
 
 
 def save_image(device_name, TMP_IMG_PATH):
@@ -69,9 +70,20 @@ if __name__ == '__main__':
 
     pub = rospy.Publisher('{}/image_updated'.format(pub_topic_name), String, queue_size=10)
     TMP_IMG_PATH = '/home/pi/tmp_imgs/{}/'.format(pub_topic_name)
+    
+    #because rostopic 'light_intensity_red/commanded' is no longer used to control light module
+    #for light_controller, we utilize the topic for image capturing.
+    #arduino is programmed to turn on LED panel when command value of any light_intensity topic
+    #(light_intensity_red, light_intensity_blue, light_intensity_white) is 1.0
+    ligth_pub_name = 'light_intensity_red/commanded'
+    light_controller_pub = rospy.Publisher(ligth_pub_name, Float64, queue_size=10)
 
     while True:
+        #turn on led panel to success catpuring image even if it is night.
+        light_controller_pub.publish(1.0)
+        time.sleep(LIGHT_CAPATURE_INTERVAL)
         is_updated, file_path = save_image_with_fswebcam(device_name,TMP_IMG_PATH)
+        light_controller_pub.publish(0.0)
         if is_updated:
             rospy.loginfo(file_path)
             pub.publish(file_path)

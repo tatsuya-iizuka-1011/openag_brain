@@ -76,12 +76,12 @@
 
     <!-- capture images-->
     <node pkg="openag_brain" type="image_saver.py" name="aerial_saver">
-        <param name="min_update_interval" value="60" type="int"/>
+        <param name="min_update_interval" value="600" type="int"/>
         <param name="device_name" value="/dev/video0" type="str"/>
         <param name="image_name" value="aerial_image" type="str"/>
     </node>
     <node pkg="openag_brain" type="image_saver.py" name="frontal_saver">
-        <param name="min_update_interval" value="60" type="int"/>
+        <param name="min_update_interval" value="600" type="int"/>
         <param name="device_name" value="/dev/video1" type="str"/>
         <param name="image_name" value="frontal_image" type="str"/>
     </node>

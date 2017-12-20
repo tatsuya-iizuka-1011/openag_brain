@@ -27,7 +27,6 @@ RECIPE_VARIABLES = frozenset(
 VALID_VARIABLES = ENVIRONMENTAL_VARIABLES.union(RECIPE_VARIABLES)
 
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
-PFC_RUN_ID = '/pfc_run_id'
 
 
 class TopicPersistence:
@@ -42,11 +41,7 @@ class TopicPersistence:
         self.last_value = None
         self.sub = rospy.Subscriber(topic, topic_type, self.on_data)
 
-    @property
-    def pfc_run_id(self):
-        #add pfc_run_id
-        pfc_run_id =  rospy.get_param(PFC_RUN_ID) if rospy.has_param(PFC_RUN_ID) else "~"
-        return pfc_run_id
+
 
     def on_data(self, item):
         curr_time = time.time()
@@ -70,8 +65,7 @@ class TopicPersistence:
             "variable": self.variable,
             "is_desired": self.is_desired,
             "value": value,
-            "timestamp": curr_time,
-            "pfc_run_id":self.pfc_run_id
+            "timestamp": curr_time
         })
         point_id = gen_doc_id(curr_time)
         self.db[point_id] = point

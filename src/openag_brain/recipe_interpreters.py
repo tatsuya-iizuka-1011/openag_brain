@@ -10,6 +10,9 @@ RECIPE_START = VariableInfo.from_dict(
 RECIPE_END = VariableInfo.from_dict(
     rospy.get_param('/var_types/recipe_variables/recipe_end'))
 
+RECIPE_UPDATE = VariableInfo.from_dict(
+    rospy.get_param('/var_types/recipe_variables/recipe_update'))
+
 # A threshold to compare time values in seconds.
 THRESHOLD = 1
 
@@ -91,15 +94,25 @@ def interpret_flexformat_recipe(recipe, start_time, now_time):
     if abs(now_time - start_time) < THRESHOLD:
         return ((RECIPE_START.name, _id),)
     time_units = verify_time_units_are_consistent(recipe['phases'])
+
+    #update recipe
+    if 'update' in recipe and recipe['update']:
+        if 'update_interval' in recipe and now_time - start_time > recipe['update_interval']:
+            return ((RECIPE_UPDATE.name, _id),)
+
+    # Need to create a function to calculate the end time of the recipe
+    #if now_time >= (end_time + THRESHOLD):
+    #    return ((RECIPE_END.name, _id),)
+    if 'end_time' in recipe:
+        if now_time -start_time > recipe['end_time']:
+            return ((RECIPE_END.name, _id),)
+
     # Returns a list of the phases and step durations  [(duration_of_phase_1, duration_of_step_1), (duration_of_phase_2, duration_of_step_2), etc]
     duration_of_phases_steps = calc_duration_of_phases_steps(recipe['phases'])
     current_phase_number, duration_in_step = calc_phase_and_time_remaining(duration_of_phases_steps,
                                                                            start_time,
                                                                            now_time,
                                                                            time_units)
-    # Need to create a function to calculate the end time of the recipe
-    #if now_time >= (end_time + THRESHOLD):
-    #    return ((RECIPE_END.name, _id),)
     current_phase = recipe['phases'][current_phase_number]
     state = {}
     for variable, variable_step_data in current_phase['step'].items():

@@ -11,6 +11,7 @@ running, `current_recipe` will be set to an empty string and
 `current_recipe_start` will be set to 0. There should always be exactly one
 instance of this module per environment in the system.
 """
+import requests
 import rospy
 from roslib.message import get_message_class
 from couchdb import Server
@@ -48,8 +49,11 @@ RECIPE_START = VariableInfo.from_dict(
 RECIPE_END = VariableInfo.from_dict(
     rospy.get_param('/var_types/recipe_variables/recipe_end'))
 
-DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
+RECIPE_UPDATE = VariableInfo.from_dict(
+    rospy.get_param('/var_types/recipe_variables/recipe_update'))
 
+DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
+API_GET_NEXT_RECIPE = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:8000/get_next_recipe'
 
 
 # This builds a dictionary of publisher instances using a
@@ -123,6 +127,8 @@ class RecipeHandler:
         """
         Set the currently running recipe... this is the CouchDB recipe document.
         """
+        if 'end_time' in recipe:
+            recipe = self.convert_time(recipe, 'end_time')
         with self.lock:
             if self.__recipe is not None:
                 raise RecipeRunningError("Recipe is already running")
@@ -254,6 +260,55 @@ class RecipeHandler:
         doc_id = gen_doc_id(rospy.get_time())
         self.env_data_db[doc_id] = doc
 
+    def update(self):
+        """
+        update recipe
+        """
+        next_recipe_doc = self.get_next_recipe()
+        start_time = rospy.get_time()
+        next_recipe_doc = self.convert_time(next_recipe_doc, 'update_interval')
+
+        try:
+            # Set the recipe document
+            if 'end_time' in next_recipe_doc:
+                next_recipe_doc = self.convert_time(recipe, 'end_time')
+            with self.lock:
+                self.__recipe = next_recipe_doc
+                self.__start_time = start_time
+                rospy.set_param(params.CURRENT_RECIPE, next_recipe_doc["_id"])
+                rospy.set_param(params.CURRENT_RECIPE_START, self.__start_time  )
+
+        except RecipeRunningError:
+            return (
+                False,
+                "There is already a recipe running. Please stop it "
+                "before attempting to start a new one"
+            )
+
+    def convert_time(self, recipe_doc, recipe_prop):
+        time_units_dict = {
+            'hours': 3600,
+            'days': 3600*24,
+            'milliseconds': 0.001,
+            'ms': 0.001,
+            'seconds': 1
+        }
+        time_units = recipe_doc['time_units']
+        if time_units in time_units_dict:
+            recipe_doc[recipe_prop] = time_units_dict[time_units] * recipe_doc[recipe_prop]
+            return recipe_doc
+        else:
+            rospy.logwarn('no time_units')
+
+    def get_next_recipe(self):
+        next_recipe = requests.get(API_GET_NEXT_RECIPE)
+        try:
+            recipe_doc = next_recipe.json()
+            return recipe_doc
+        except:
+            trace('given recipe is not a type of json')
+
+
 
 
 #------------------------------------------------------------------------------
@@ -330,6 +385,12 @@ if __name__ == '__main__':
                 elif variable == RECIPE_START.name:
                     # Write an env. data pt. for when we started this recipe.
                     recipe_handler.save_recipe_dp(variable)
+                elif variable == RECIPE_UPDATE.name:
+                    trace("recipe_handler publish: UPDATE!")
+                    rospy.logwarn('start to update recipe func')
+                    recipe_handler.update()
+
+
                 try:
                     pub.publish(value)
                 except ValueError:

@@ -7,6 +7,10 @@ recipe_variables:
     name: recipe_end
     description: "Represents the end of a recipe"
     type: "std_msgs/String"
+  recipe_update:
+    name: recipe_update
+    description: "Represents the update of a recipe"
+    type: "std_msgs/String"
 environment_variables:
   air_temperature:
     name: air_temperature

@@ -95,17 +95,21 @@ def interpret_flexformat_recipe(recipe, start_time, now_time):
         return ((RECIPE_START.name, _id),)
     time_units = verify_time_units_are_consistent(recipe['phases'])
 
-    #update recipe
-    if 'update' in recipe and recipe['update']:
-        if 'update_interval' in recipe and now_time - start_time > recipe['update_interval']:
-            return ((RECIPE_UPDATE.name, _id),)
-
     # Need to create a function to calculate the end time of the recipe
     #if now_time >= (end_time + THRESHOLD):
     #    return ((RECIPE_END.name, _id),)
     if 'end_time' in recipe:
         if now_time -start_time > recipe['end_time']:
             return ((RECIPE_END.name, _id),)
+    #update recipe
+    if 'update' in recipe and recipe['update']:
+        if 'last_update' in recipe and 'update_interval' in recipe:
+            if now_time - recipe['last_update'] > recipe['update_interval']:
+                return ((RECIPE_UPDATE.name, _id),)
+        else:
+            rospy.logwarn('update_interval or last_update is not defined in the recipe document')
+
+
 
     # Returns a list of the phases and step durations  [(duration_of_phase_1, duration_of_step_1), (duration_of_phase_2, duration_of_step_2), etc]
     duration_of_phases_steps = calc_duration_of_phases_steps(recipe['phases'])
@@ -113,6 +117,8 @@ def interpret_flexformat_recipe(recipe, start_time, now_time):
                                                                            start_time,
                                                                            now_time,
                                                                            time_units)
+    if current_phase_number is None:
+        return ((RECIPE_END.name, _id),)
     current_phase = recipe['phases'][current_phase_number]
     state = {}
     for variable, variable_step_data in current_phase['step'].items():
@@ -227,6 +233,7 @@ def calc_phase_and_time_remaining(duration_of_phases_steps, start_time, now_time
     time_elapsed = now_time - start_time
     #time_elapsed = time_elapsed - offset_duration_by_time_from_start(start_time)  # Offset elapsed time by hours on first day. this method doesn't work.
     time_elapsed = convert_duration_units(time_elapsed, time_units)
+    current_phase_number = -1
     for i, (total_duration, step_duration) in enumerate(duration_of_phases_steps):
         if time_elapsed > total_duration:
             time_elapsed -= total_duration
@@ -234,4 +241,9 @@ def calc_phase_and_time_remaining(duration_of_phases_steps, start_time, now_time
             duration_in_phase = time_elapsed % step_duration
             current_phase_number = i
             break
-    return current_phase_number, duration_in_phase
+    if current_phase_number < 0:
+        #last phase already has passed
+        rospy.logwarn('last phase already has passed. stop recipe. start_time:{}, now_time:{}'.format(start_time, now_time))
+        return None, None
+    else:
+        return current_phase_number, duration_in_phase

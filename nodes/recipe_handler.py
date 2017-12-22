@@ -54,7 +54,7 @@ RECIPE_UPDATE = VariableInfo.from_dict(
 
 DATABASE_SERVER_IP_PORT = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:5984/'
 API_GET_NEXT_RECIPE = 'http://foodcomputer-db.akg.t.u-tokyo.ac.jp:8000/get_next_recipe'
-
+DEFAULT_DURATION_TIME = 100000
 
 # This builds a dictionary of publisher instances using a
 # "dictionary comprehension" (syntactic sugar for building dictionaries).
@@ -127,8 +127,12 @@ class RecipeHandler:
         """
         Set the currently running recipe... this is the CouchDB recipe document.
         """
-        if 'end_time' in recipe:
-            recipe = self.convert_time(recipe, 'end_time')
+        recipe_props = ['end_time', 'update_interval']
+        for prop in recipe_props:
+            if '{}_value'.format(prop) in recipe:
+                recipe[prop] = self.convert_time(recipe['{}_value'.format(prop)], recipe['time_units'])
+            else:
+                recipe[prop] = DEFAULT_DURATION_TIME
         with self.lock:
             if self.__recipe is not None:
                 raise RecipeRunningError("Recipe is already running")
@@ -137,6 +141,7 @@ class RecipeHandler:
             self.__start_time = start_time
             if self.__start_time is None:
                 self.__start_time = rospy.get_time()
+                recipe['last_update'] = self.__start_time
             rospy.set_param(params.CURRENT_RECIPE, recipe["_id"])
             rospy.set_param(params.CURRENT_RECIPE_START, self.__start_time  )
         return self
@@ -265,18 +270,17 @@ class RecipeHandler:
         update recipe
         """
         next_recipe_doc = self.get_next_recipe()
-        start_time = rospy.get_time()
-        next_recipe_doc = self.convert_time(next_recipe_doc, 'update_interval')
-
         try:
             # Set the recipe document
-            if 'end_time' in next_recipe_doc:
-                next_recipe_doc = self.convert_time(recipe, 'end_time')
             with self.lock:
-                self.__recipe = next_recipe_doc
-                self.__start_time = start_time
-                rospy.set_param(params.CURRENT_RECIPE, next_recipe_doc["_id"])
-                rospy.set_param(params.CURRENT_RECIPE_START, self.__start_time  )
+                self.__recipe['phases'].append(next_recipe_doc['phase'])
+                self.__recipe['update_interval'] = self.convert_time(next_recipe_doc['update_interval_value'], self.__recipe['time_units'])
+                if self.__recipe['last_update'] is None:
+                    self.__recipe['last_update'] = self.__start_time + next_recipe_doc['phase_duration']
+                else:
+                    self.__recipe['last_update'] += next_recipe_doc['phase_duration']
+
+            self.recipe_db[self.__recipe['_id']] = self.__recipe
 
         except RecipeRunningError:
             return (
@@ -285,7 +289,7 @@ class RecipeHandler:
                 "before attempting to start a new one"
             )
 
-    def convert_time(self, recipe_doc, recipe_prop):
+    def convert_time(self, value, time_units):
         time_units_dict = {
             'hours': 3600,
             'days': 3600*24,
@@ -293,12 +297,11 @@ class RecipeHandler:
             'ms': 0.001,
             'seconds': 1
         }
-        time_units = recipe_doc['time_units']
+
         if time_units in time_units_dict:
-            recipe_doc[recipe_prop] = time_units_dict[time_units] * recipe_doc[recipe_prop]
-            return recipe_doc
+            return value * time_units_dict[time_units]
         else:
-            rospy.logwarn('no time_units')
+            return None
 
     def get_next_recipe(self):
         next_recipe = requests.get(API_GET_NEXT_RECIPE)
@@ -387,7 +390,6 @@ if __name__ == '__main__':
                     recipe_handler.save_recipe_dp(variable)
                 elif variable == RECIPE_UPDATE.name:
                     trace("recipe_handler publish: UPDATE!")
-                    rospy.logwarn('start to update recipe func')
                     recipe_handler.update()
 
 

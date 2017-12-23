@@ -41,6 +41,11 @@ class TopicPersistence:
         self.last_value = None
         self.sub = rospy.Subscriber(topic, topic_type, self.on_data)
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> develop
     def on_data(self, item):
         curr_time = time.time()
         value = item.data

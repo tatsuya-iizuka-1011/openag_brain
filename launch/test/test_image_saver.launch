@@ -17,5 +17,9 @@
             <param name="min_update_interval" value="60" type="int"/>
             <param name="img_database_path" value="/home/iizuka/TestImages" type="str"/>
         </node>
+        <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
+          <param name="publisher_rate_hz" value="1" type="int"/>
+          <param name="baud_rate" value="115200" type="int"/>
+        </node>
     </group>
 </launch>

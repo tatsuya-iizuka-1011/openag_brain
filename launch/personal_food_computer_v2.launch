@@ -76,19 +76,19 @@
 
     <!-- capture images-->
     <node pkg="openag_brain" type="image_saver.py" name="aerial_saver">
-        <param name="min_update_interval" value="60" type="int"/>
+        <param name="min_update_interval" value="3600" type="int"/>
         <param name="device_name" value="/dev/video0" type="str"/>
         <param name="image_name" value="aerial_image" type="str"/>
     </node>
     <node pkg="openag_brain" type="image_saver.py" name="frontal_saver">
-        <param name="min_update_interval" value="60" type="int"/>
+        <param name="min_update_interval" value="3600" type="int"/>
         <param name="device_name" value="/dev/video1" type="str"/>
         <param name="image_name" value="frontal_image" type="str"/>
     </node>
 
     <!-- if using PFC2, assign img_database_path to "/home/iizuka/ImageDatabase2"-->
     <node pkg="openag_brain" type="image_persistence.py" name="image_persistence">
-        <param name="min_update_interval" value="3600" type="int"/>
+        <param name="min_update_interval" value="60" type="int"/>
         <param name="img_database_path" value="/home/iizuka/ImageDatabase" type="str"/>
     </node>
 

@@ -304,14 +304,20 @@ class RecipeHandler:
             return None
 
     def get_next_recipe(self):
-        next_recipe = requests.get(API_GET_NEXT_RECIPE)
+        get_params = self.get_params_update()
+        next_recipe = requests.get(API_GET_NEXT_RECIPE, params=get_params)
         try:
             recipe_doc = next_recipe.json()
             return recipe_doc
         except:
             trace('given recipe is not a type of json')
 
-
+    def get_params_update(self):
+        next_phase = len(self.__recipe['phases'])
+        get_params = {
+            'next_phase':next_phase,
+            'search_func':'day_duration_search'}
+        return get_params
 
 
 #------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-loginfo#!/usr/bin/env python
+#!/usr/bin/env python
 
 import rospy
 import time
@@ -38,7 +38,6 @@ if __name__ == '__main__':
 
     ph_desired_name = 'water_potential_hydrogen/desired'
     ph_desired_pub = rospy.Publisher(ph_desired_name, Float64, queue_size=10)
-
 
     def water_filled_callback(item):
         global water_filled_flg, water_filled_conut

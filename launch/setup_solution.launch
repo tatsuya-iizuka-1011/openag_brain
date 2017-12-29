@@ -1,0 +1,52 @@
+<launch>
+  <arg name="environment_1" value="environments/environment_1" />
+
+  <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_v2.yaml" />
+  <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_var_types.yaml" ns="var_types"/>
+  <group ns="$(arg environment_1)">
+    <node pkg="openag_brain" type="setup_solution.py" name="setup_solution_1">
+      <param name="water_level" value='high' type="str"/>
+      <param name="target_ec" value="1.0" type="double"/>
+      <param name="target_ph" value="6.0" type="double"/>
+      <param name="ec_pump_delay" value="0.5" type="double"/>
+      <param name="nutirent_a_pump_value" value="100.0" type="double"/>
+      <param name="nutirent_b_pump_value" value="100.0" type="double"/>
+      <param name="ph_deadbandwidth" value="0.2" type="double"/>
+    </node>
+
+
+    <node pkg="openag_brain" type="linear_controller.py" name="water_level_high_controller_1">
+      <param name="variable" value="water_level_high" type="str"/>
+    </node>
+
+    <node pkg="openag_brain" type="pid.py" name="water_potential_hydrogen_controller_1">
+      <param name="deadband_width" value="0.5" type="double"/>
+      <param name="windup_limit" value="10" type="double"/>
+      <param name="upper_limit" value="1" type="double"/>
+      <param name="lower_limit" value="-1" type="double"/>
+      <param name="variable" value="water_potential_hydrogen" type="str"/>
+      <param name="Kp" value="1" type="double"/>
+      <param name="Ki" value="0.1" type="double"/>
+      <param name="deadband_width" value="0.3" type="double"/>
+      <param name="cmd_interval" value="0" type="double"/>
+      <param name="set_point_shutoff" value="3" type="double"/>
+      <param name="default_command_value" value="0" type="double"/>
+    </node>
+
+    <node pkg="openag_brain" type="topic_filter.py" name="topic_filter_1"/>
+
+    <!-- nutrient pumps -->
+
+    <node pkg="openag_brain" type="direct_controller.py" name="nutrient_flora_duo_a_controller_1">
+      <param name="variable" value="nutrient_flora_duo_a" type="str"/>
+    </node>
+    <node pkg="openag_brain" type="direct_controller.py" name="nutrient_flora_duo_b_controller_1">
+      <param name="variable" value="nutrient_flora_duo_b" type="str"/>
+    </node>
+
+    <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
+      <param name="publisher_rate_hz" value="1" type="int"/>
+      <param name="baud_rate" value="115200" type="int"/>
+    </node>
+  </group>
+</launch>

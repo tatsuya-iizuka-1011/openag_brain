@@ -167,10 +167,10 @@ class RecipeHandler:
             recipe = self.recipe_db[recipe_id]
         except Exception as e:
             return False, "\"{}\" does not reference a valid "\
-            "recipe".format(recipe_id)
+                "recipe".format(recipe_id)
 
-        #trace("recipe_handler: PUBLISHERS=%s", PUBLISHERS)
-        #trace("recipe_handler: recipe=%s", recipe)
+        # trace("recipe_handler: PUBLISHERS=%s", PUBLISHERS)
+        # trace("recipe_handler: recipe=%s", recipe)
 
         try:
             # Set the recipe document
@@ -316,7 +316,7 @@ class RecipeHandler:
         next_phase = len(self.__recipe['phases'])
         get_params = {
             'next_phase':next_phase,
-            'search_func':'day_duration_search'}
+            'search_func':self.__recipe['search_func']}
         return get_params
 
 
